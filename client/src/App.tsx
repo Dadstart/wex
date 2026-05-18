@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import './App.css'
 
 type Transaction = {
@@ -26,7 +26,7 @@ function App() {
   const [formError, setFormError] = useState<string | null>(null)
   const [createdTransaction, setCreatedTransaction] = useState<Transaction | null>(null)
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setFormError(null)
     setCreatedTransaction(null)

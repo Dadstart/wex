@@ -9,3 +9,14 @@ GET {{Wex.Server_HostAddress}}/openapi/v1.json
 Accept: application/json
 
 ###
+
+POST {{Wex.Server_HostAddress}}/api/transactions
+Content-Type: application/json
+
+{
+  "description": "Coffee",
+  "date": "2026-05-18",
+  "amount": 4.50
+}
+
+###

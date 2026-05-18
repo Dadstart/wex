@@ -77,6 +77,33 @@ code {
   letter-spacing: 0.03em;
 }
 
+.loading-state--compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+}
+
+.loading-state--compact .spinner {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.loading-state--compact .spinner-ring--inner {
+  inset: 0.2rem;
+}
+
+.loading-state--compact .spinner-core {
+  width: 0.4rem;
+  height: 0.4rem;
+  margin: -0.2rem 0 0 -0.2rem;
+}
+
+.loading-state--compact p {
+  font-size: 0.9rem;
+}
+
 .spinner {
   position: relative;
   width: 3.25rem;

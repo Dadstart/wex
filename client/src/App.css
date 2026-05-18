@@ -62,20 +62,24 @@ code {
 }
 
 .table-wrap {
-  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .transactions-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .transactions-table th,
 .transactions-table td {
-  padding: 0.65rem 0.75rem;
+  padding: 0.65rem 0.5rem;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .transactions-table th {
@@ -88,10 +92,17 @@ code {
   border-bottom: none;
 }
 
+.transactions-table .col-description {
+  width: 35%;
+}
+
+.transactions-table .col-date {
+  width: 28%;
+}
+
 .transactions-table .amount-col {
   text-align: right;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .transaction-form {

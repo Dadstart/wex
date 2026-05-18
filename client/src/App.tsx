@@ -258,8 +258,12 @@ function App() {
             <table className="transactions-table">
               <thead>
                 <tr>
-                  <th scope="col">Description</th>
-                  <th scope="col">Date & time</th>
+                  <th scope="col" className="col-description">
+                    Description
+                  </th>
+                  <th scope="col" className="col-date">
+                    Date & time
+                  </th>
                   <th scope="col" className="amount-col">
                     USD amount
                   </th>
@@ -278,8 +282,10 @@ function App() {
               <tbody>
                 {transactions.map((transaction) => (
                   <tr key={transaction.id}>
-                    <td>{transaction.description}</td>
-                    <td>{new Date(transaction.transactionDate).toLocaleString()}</td>
+                    <td className="col-description">{transaction.description}</td>
+                    <td className="col-date">
+                      {new Date(transaction.transactionDate).toLocaleString()}
+                    </td>
                     <td className="amount-col">
                       {usdFormatter.format(transaction.purchaseAmountUsd)}
                     </td>

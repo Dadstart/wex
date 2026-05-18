@@ -55,3 +55,64 @@ code {
 .error {
   color: #b91c1c;
 }
+
+.success {
+  margin: 0;
+  color: #047857;
+}
+
+.transaction-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.field input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font: inherit;
+  color: #0f172a;
+  background: #fff;
+}
+
+.field input:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.field input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.transaction-form button {
+  justify-self: start;
+  padding: 0.65rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  cursor: pointer;
+}
+
+.transaction-form button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.transaction-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

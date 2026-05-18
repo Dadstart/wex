@@ -48,34 +48,10 @@ code {
   font-size: 1.25rem;
 }
 
+.panel p {
+  margin: 0;
+}
+
 .error {
-  margin: 0;
   color: #b91c1c;
-}
-
-.forecast-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
-}
-
-.forecast-list li {
-  display: grid;
-  gap: 0.25rem;
-  padding: 0.875rem 1rem;
-  border-radius: 0.5rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-}
-
-.forecast-list strong {
-  font-size: 1rem;
-}
-
-.forecast-list span,
-.forecast-list time {
-  color: #64748b;
-  font-size: 0.95rem;
 }

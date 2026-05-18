@@ -1,11 +1,6 @@
-using Microsoft.EntityFrameworkCore;
-using Wex.Server.Data;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<WexDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -15,11 +10,6 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    await DbInitializer.InitializeAsync(scope.ServiceProvider.GetRequiredService<WexDbContext>());
-}
 
 if (app.Environment.IsDevelopment())
 {
@@ -36,13 +26,6 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
-
-app.MapGet("/api/weatherforecast", async (WexDbContext db) =>
-    await db.Forecasts
-        .AsNoTracking()
-        .OrderBy(f => f.Date)
-        .ToListAsync())
-.WithName("GetWeatherForecast");
 
 app.MapFallbackToFile("index.html");
 

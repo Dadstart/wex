@@ -24,17 +24,6 @@ dotnet run --project server
 
 The API is available at `http://localhost:5118`. In development, the ASP.NET app proxies the UI to the Vite dev server on port 5173.
 
-### Database
-
-Local data uses **SQLite** (`server/wex.db`, created on first run). Migrations live in `server/Migrations/`. To add a migration after model changes:
-
-```bash
-cd server
-dotnet ef migrations add <MigrationName>
-```
-
-Install the EF CLI once if needed: `dotnet tool install --global dotnet-ef`
-
 To run frontend and backend separately:
 
 ```bash

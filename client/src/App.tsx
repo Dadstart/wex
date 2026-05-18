@@ -1,35 +1,32 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 
-type WeatherForecast = {
-  date: string
-  temperatureC: number
-  temperatureF: number
-  summary: string | null
+type HealthResponse = {
+  status: string
 }
 
 function App() {
-  const [forecasts, setForecasts] = useState<WeatherForecast[]>([])
+  const [health, setHealth] = useState<HealthResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
-    async function loadForecast() {
+    async function loadHealth() {
       try {
-        const response = await fetch('/api/weatherforecast')
+        const response = await fetch('/api/health')
         if (!response.ok) {
           throw new Error(`Request failed (${response.status})`)
         }
-        const data: WeatherForecast[] = await response.json()
+        const data: HealthResponse = await response.json()
         if (!cancelled) {
-          setForecasts(data)
+          setHealth(data)
           setError(null)
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load forecast')
+          setError(err instanceof Error ? err.message : 'Failed to reach the API')
         }
       } finally {
         if (!cancelled) {
@@ -38,7 +35,7 @@ function App() {
       }
     }
 
-    loadForecast()
+    loadHealth()
     return () => {
       cancelled = true
     }
@@ -56,21 +53,13 @@ function App() {
       </header>
 
       <section className="panel" aria-live="polite">
-        <h2>Weather forecast</h2>
-        {loading && <p>Loading from the API…</p>}
+        <h2>API status</h2>
+        {loading && <p>Checking the API…</p>}
         {error && <p className="error">{error}</p>}
-        {!loading && !error && (
-          <ul className="forecast-list">
-            {forecasts.map((item) => (
-              <li key={item.date}>
-                <strong>{item.summary ?? 'Unknown'}</strong>
-                <span>
-                  {item.temperatureC}°C / {item.temperatureF}°F
-                </span>
-                <time dateTime={item.date}>{item.date}</time>
-              </li>
-            ))}
-          </ul>
+        {!loading && !error && health && (
+          <p>
+            Backend is <strong>{health.status}</strong>.
+          </p>
         )}
       </section>
     </main>

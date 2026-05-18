@@ -48,6 +48,19 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
+function LoadingTransactions() {
+  return (
+    <div className="loading-state" role="status" aria-live="polite">
+      <div className="spinner" aria-hidden="true">
+        <span className="spinner-ring" />
+        <span className="spinner-ring spinner-ring--inner" />
+        <span className="spinner-core" />
+      </div>
+      <p>Loading transactions…</p>
+    </div>
+  )
+}
+
 function problemMessage(problem: ValidationProblem | null, status: number): string {
   if (problem?.errors) {
     return Object.values(problem.errors).flat().join(' ')
@@ -248,7 +261,7 @@ function App() {
 
       <section className="panel">
         <h2>All transactions</h2>
-        {transactionsLoading && <p>Loading transactions…</p>}
+        {transactionsLoading && <LoadingTransactions />}
         {transactionsError && <p className="error">{transactionsError}</p>}
         {!transactionsLoading && !transactionsError && transactions.length === 0 && (
           <p className="empty">No transactions yet.</p>

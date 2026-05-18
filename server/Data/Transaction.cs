@@ -6,7 +6,7 @@ public class Transaction
 
     public required string Description { get; set; }
 
-    public DateOnly TransactionDate { get; set; }
+    public DateTime TransactionDate { get; set; }
 
     public decimal PurchaseAmount { get; set; }
 }

@@ -15,7 +15,7 @@ Content-Type: application/json
 
 {
   "description": "Coffee",
-  "date": "2026-05-18",
+  "date": "2026-05-18T09:30:00",
   "amount": 4.50
 }
 

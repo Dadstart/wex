@@ -2,5 +2,5 @@ namespace Wex.Server.Models;
 
 public record CreateTransactionRequest(
     string Description,
-    DateOnly Date,
+    DateTime Date,
     decimal Amount);

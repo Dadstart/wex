@@ -5,17 +5,29 @@ type Transaction = {
   id: string
   description: string
   transactionDate: string
-  purchaseAmount: number
+  purchaseAmountUsd: number
+  targetCurrency?: string | null
+  exchangeRate?: number | null
+  convertedAmount?: number | null
 }
 
 type ValidationProblem = {
   errors?: Record<string, string[]>
+  title?: string
+  detail?: string
 }
 
-const currencyFormatter = new Intl.NumberFormat(undefined, {
+const usdFormatter = new Intl.NumberFormat(undefined, {
   style: 'currency',
   currency: 'USD',
 })
+
+function formatConverted(amount: number, currency: string): string {
+  return `${amount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} ${currency}`
+}
 
 function toDateTimeLocalValue(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -36,7 +48,17 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
+function problemMessage(problem: ValidationProblem | null, status: number): string {
+  if (problem?.errors) {
+    return Object.values(problem.errors).flat().join(' ')
+  }
+  return problem?.title ?? problem?.detail ?? `Request failed (${status})`
+}
+
 function App() {
+  const [currencies, setCurrencies] = useState<string[]>([])
+  const [targetCurrency, setTargetCurrency] = useState('')
+
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [transactionsLoading, setTransactionsLoading] = useState(true)
   const [transactionsError, setTransactionsError] = useState<string | null>(null)
@@ -51,19 +73,53 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    async function loadTransactions() {
+    async function loadCurrencies() {
       try {
-        const response = await fetch('/api/transactions')
+        const response = await fetch('/api/currencies')
         if (!response.ok) {
           throw new Error(`Request failed (${response.status})`)
+        }
+        const data = await readJsonResponse<string[]>(response)
+        if (!cancelled) {
+          setCurrencies(data)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setTransactionsError(
+            err instanceof Error ? err.message : 'Failed to load currencies',
+          )
+        }
+      }
+    }
+
+    void loadCurrencies()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadTransactions() {
+      try {
+        const params = targetCurrency
+          ? `?currency=${encodeURIComponent(targetCurrency)}`
+          : ''
+        const response = await fetch(`/api/transactions${params}`)
+        if (!response.ok) {
+          const problem = await readJsonResponse<ValidationProblem>(response).catch(
+            () => null,
+          )
+          throw new Error(problemMessage(problem, response.status))
         }
         const data = await readJsonResponse<Transaction[]>(response)
         if (!cancelled) {
           setTransactions(data)
-          setTransactionsError(null)
         }
       } catch (err) {
         if (!cancelled) {
+          setTransactions([])
           setTransactionsError(
             err instanceof Error ? err.message : 'Failed to load transactions',
           )
@@ -79,7 +135,7 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [targetCurrency])
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -122,19 +178,29 @@ function App() {
         const problem = await readJsonResponse<ValidationProblem>(response).catch(
           () => null,
         )
-        const apiMessage = problem?.errors
-          ? Object.values(problem.errors).flat().join(' ')
-          : null
-        throw new Error(apiMessage ?? `Request failed (${response.status})`)
+        throw new Error(problemMessage(problem, response.status))
       }
 
-      const transaction = await readJsonResponse<Transaction>(response)
-      setTransactions((current) =>
-        [transaction, ...current].sort(
-          (a, b) =>
-            new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
-        ),
-      )
+      if (targetCurrency) {
+        const listResponse = await fetch(
+          `/api/transactions?currency=${encodeURIComponent(targetCurrency)}`,
+        )
+        if (!listResponse.ok) {
+          const problem = await readJsonResponse<ValidationProblem>(listResponse).catch(
+            () => null,
+          )
+          throw new Error(problemMessage(problem, listResponse.status))
+        }
+        setTransactions(await readJsonResponse<Transaction[]>(listResponse))
+      } else {
+        const transaction = await readJsonResponse<Transaction>(response)
+        setTransactions((current) =>
+          [transaction, ...current].sort(
+            (a, b) =>
+              new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
+          ),
+        )
+      }
       setDescription('')
       setAmount('')
       setDateTime(toDateTimeLocalValue(new Date()))
@@ -145,13 +211,40 @@ function App() {
     }
   }
 
+  const showConversion = Boolean(targetCurrency)
+
   return (
     <main className="app">
       <header>
         <p className="eyebrow">Wex</p>
         <h1>Transactions</h1>
-        <p className="lede">Record a purchase against the API-backed database.</p>
+        <p className="lede">
+          Record purchases in USD and view amounts converted using U.S. Treasury reporting
+          rates.
+        </p>
       </header>
+
+      <section className="panel currency-panel">
+        <label className="field currency-field">
+          <span>Display currency</span>
+          <select
+            value={targetCurrency}
+            onChange={(e) => {
+              setTargetCurrency(e.target.value)
+              setTransactionsLoading(true)
+              setTransactionsError(null)
+            }}
+            disabled={transactionsLoading && currencies.length === 0}
+          >
+            <option value="">USD only</option>
+            {currencies.map((currency) => (
+              <option key={currency} value={currency}>
+                {currency}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
 
       <section className="panel">
         <h2>All transactions</h2>
@@ -168,8 +261,18 @@ function App() {
                   <th scope="col">Description</th>
                   <th scope="col">Date & time</th>
                   <th scope="col" className="amount-col">
-                    Amount
+                    USD amount
                   </th>
+                  {showConversion && (
+                    <>
+                      <th scope="col" className="amount-col">
+                        Exchange rate
+                      </th>
+                      <th scope="col" className="amount-col">
+                        {targetCurrency}
+                      </th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -178,8 +281,26 @@ function App() {
                     <td>{transaction.description}</td>
                     <td>{new Date(transaction.transactionDate).toLocaleString()}</td>
                     <td className="amount-col">
-                      {currencyFormatter.format(transaction.purchaseAmount)}
+                      {usdFormatter.format(transaction.purchaseAmountUsd)}
                     </td>
+                    {showConversion && (
+                      <>
+                        <td className="amount-col">
+                          {transaction.exchangeRate?.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 6,
+                          })}
+                        </td>
+                        <td className="amount-col">
+                          {transaction.convertedAmount != null && transaction.targetCurrency
+                            ? formatConverted(
+                                transaction.convertedAmount,
+                                transaction.targetCurrency,
+                              )
+                            : '—'}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -205,7 +326,7 @@ function App() {
           </label>
 
           <label className="field">
-            <span>Amount</span>
+            <span>Amount (USD)</span>
             <input
               type="number"
               name="amount"

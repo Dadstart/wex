@@ -124,9 +124,33 @@ code {
   outline-offset: 1px;
 }
 
-.field input:disabled {
+.field input:disabled,
+.field select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.field select {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font: inherit;
+  color: #0f172a;
+  background: #fff;
+}
+
+.field select:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.currency-panel {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.currency-field {
+  max-width: 20rem;
 }
 
 .transaction-form button {

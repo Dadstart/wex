@@ -58,3 +58,25 @@ dotnet publish server -c Release
 ```
 
 The React app is emitted to `server/wwwroot` and served as static files by ASP.NET Core.
+
+## Tests
+
+Run backend tests (unit + API integration with an in-memory database and mocked Treasury API):
+
+```bash
+dotnet test server.tests/Wex.Server.Tests.csproj
+```
+
+Run frontend tests (Vitest + React Testing Library):
+
+```bash
+cd client
+npm test
+```
+
+Or run everything from the solution:
+
+```bash
+dotnet test Wex.sln
+cd client && npm test
+```

@@ -38,6 +38,13 @@ app.UseStaticFiles();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 
+app.MapGet("/api/transactions", async (WexDbContext db) =>
+    await db.Transactions
+        .AsNoTracking()
+        .OrderByDescending(t => t.TransactionDate)
+        .ToListAsync())
+.WithName("GetTransactions");
+
 app.MapPost("/api/transactions", async (CreateTransactionRequest request, WexDbContext db) =>
 {
     var validationError = ValidateCreateTransactionRequest(request);

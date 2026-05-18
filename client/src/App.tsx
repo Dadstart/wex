@@ -1,4 +1,4 @@
-import { useState, type SubmitEvent } from 'react'
+import { useEffect, useState, type SubmitEvent } from 'react'
 import './App.css'
 
 type Transaction = {
@@ -12,24 +12,78 @@ type ValidationProblem = {
   errors?: Record<string, string[]>
 }
 
+const currencyFormatter = new Intl.NumberFormat(undefined, {
+  style: 'currency',
+  currency: 'USD',
+})
+
 function toDateTimeLocalValue(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
+async function readJsonResponse<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.includes('application/json')) {
+    const body = await response.text()
+    if (body.trimStart().toLowerCase().startsWith('<!doctype')) {
+      throw new Error(
+        'API returned HTML instead of JSON. Start the backend with: dotnet run --project server',
+      )
+    }
+    throw new Error(body || `Unexpected response (${response.status})`)
+  }
+  return response.json() as Promise<T>
+}
+
 function App() {
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [transactionsLoading, setTransactionsLoading] = useState(true)
+  const [transactionsError, setTransactionsError] = useState<string | null>(null)
+
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [dateTime, setDateTime] = useState(() => toDateTimeLocalValue(new Date()))
 
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [createdTransaction, setCreatedTransaction] = useState<Transaction | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadTransactions() {
+      try {
+        const response = await fetch('/api/transactions')
+        if (!response.ok) {
+          throw new Error(`Request failed (${response.status})`)
+        }
+        const data = await readJsonResponse<Transaction[]>(response)
+        if (!cancelled) {
+          setTransactions(data)
+          setTransactionsError(null)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setTransactionsError(
+            err instanceof Error ? err.message : 'Failed to load transactions',
+          )
+        }
+      } finally {
+        if (!cancelled) {
+          setTransactionsLoading(false)
+        }
+      }
+    }
+
+    void loadTransactions()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     setFormError(null)
-    setCreatedTransaction(null)
 
     const trimmedDescription = description.trim()
     if (!trimmedDescription) {
@@ -65,15 +119,22 @@ function App() {
       })
 
       if (!response.ok) {
-        const problem = (await response.json().catch(() => null)) as ValidationProblem | null
+        const problem = await readJsonResponse<ValidationProblem>(response).catch(
+          () => null,
+        )
         const apiMessage = problem?.errors
           ? Object.values(problem.errors).flat().join(' ')
           : null
         throw new Error(apiMessage ?? `Request failed (${response.status})`)
       }
 
-      const transaction: Transaction = await response.json()
-      setCreatedTransaction(transaction)
+      const transaction = await readJsonResponse<Transaction>(response)
+      setTransactions((current) =>
+        [transaction, ...current].sort(
+          (a, b) =>
+            new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime(),
+        ),
+      )
       setDescription('')
       setAmount('')
       setDateTime(toDateTimeLocalValue(new Date()))
@@ -91,6 +152,41 @@ function App() {
         <h1>Transactions</h1>
         <p className="lede">Record a purchase against the API-backed database.</p>
       </header>
+
+      <section className="panel">
+        <h2>All transactions</h2>
+        {transactionsLoading && <p>Loading transactions…</p>}
+        {transactionsError && <p className="error">{transactionsError}</p>}
+        {!transactionsLoading && !transactionsError && transactions.length === 0 && (
+          <p className="empty">No transactions yet.</p>
+        )}
+        {!transactionsLoading && !transactionsError && transactions.length > 0 && (
+          <div className="table-wrap">
+            <table className="transactions-table">
+              <thead>
+                <tr>
+                  <th scope="col">Description</th>
+                  <th scope="col">Date & time</th>
+                  <th scope="col" className="amount-col">
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr key={transaction.id}>
+                    <td>{transaction.description}</td>
+                    <td>{new Date(transaction.transactionDate).toLocaleString()}</td>
+                    <td className="amount-col">
+                      {currencyFormatter.format(transaction.purchaseAmount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section className="panel">
         <h2>New transaction</h2>
@@ -134,14 +230,6 @@ function App() {
           </label>
 
           {formError && <p className="error">{formError}</p>}
-
-          {createdTransaction && (
-            <p className="success">
-              Saved <strong>{createdTransaction.description}</strong> (
-              {createdTransaction.purchaseAmount.toFixed(2)} on{' '}
-              {new Date(createdTransaction.transactionDate).toLocaleString()}).
-            </p>
-          )}
 
           <button type="submit" disabled={submitting}>
             {submitting ? 'Saving…' : 'Create transaction'}

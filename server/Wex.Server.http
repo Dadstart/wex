@@ -5,6 +5,11 @@ Accept: application/json
 
 ###
 
+GET {{Wex.Server_HostAddress}}/api/transactions
+Accept: application/json
+
+###
+
 GET {{Wex.Server_HostAddress}}/openapi/v1.json
 Accept: application/json
 

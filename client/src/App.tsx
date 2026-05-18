@@ -1,10 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
 
-type HealthResponse = {
-  status: string
-}
-
 type Transaction = {
   id: string
   description: string
@@ -22,10 +18,6 @@ function toDateTimeLocalValue(date: Date): string {
 }
 
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null)
-  const [healthLoading, setHealthLoading] = useState(true)
-  const [healthError, setHealthError] = useState<string | null>(null)
-
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [dateTime, setDateTime] = useState(() => toDateTimeLocalValue(new Date()))
@@ -33,37 +25,6 @@ function App() {
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [createdTransaction, setCreatedTransaction] = useState<Transaction | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadHealth() {
-      try {
-        const response = await fetch('/api/health')
-        if (!response.ok) {
-          throw new Error(`Request failed (${response.status})`)
-        }
-        const data: HealthResponse = await response.json()
-        if (!cancelled) {
-          setHealth(data)
-          setHealthError(null)
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setHealthError(err instanceof Error ? err.message : 'Failed to reach the API')
-        }
-      } finally {
-        if (!cancelled) {
-          setHealthLoading(false)
-        }
-      }
-    }
-
-    loadHealth()
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -131,17 +92,6 @@ function App() {
         <p className="lede">Record a purchase against the API-backed database.</p>
       </header>
 
-      <section className="panel" aria-live="polite">
-        <h2>API status</h2>
-        {healthLoading && <p>Checking the API…</p>}
-        {healthError && <p className="error">{healthError}</p>}
-        {!healthLoading && !healthError && health && (
-          <p>
-            Backend is <strong>{health.status}</strong>.
-          </p>
-        )}
-      </section>
-
       <section className="panel">
         <h2>New transaction</h2>
         <form className="transaction-form" onSubmit={handleSubmit}>
@@ -154,7 +104,7 @@ function App() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Coffee"
-              disabled={submitting || !!healthError}
+              disabled={submitting}
             />
           </label>
 
@@ -168,7 +118,7 @@ function App() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
-              disabled={submitting || !!healthError}
+              disabled={submitting}
             />
           </label>
 
@@ -179,7 +129,7 @@ function App() {
               name="dateTime"
               value={dateTime}
               onChange={(e) => setDateTime(e.target.value)}
-              disabled={submitting || !!healthError}
+              disabled={submitting}
             />
           </label>
 
@@ -193,7 +143,7 @@ function App() {
             </p>
           )}
 
-          <button type="submit" disabled={submitting || !!healthError}>
+          <button type="submit" disabled={submitting}>
             {submitting ? 'Saving…' : 'Create transaction'}
           </button>
         </form>

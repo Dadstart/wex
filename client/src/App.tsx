@@ -48,15 +48,25 @@ async function readJsonResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
-function LoadingTransactions() {
+function LoadingSpinner({
+  label,
+  compact = false,
+}: {
+  label: string
+  compact?: boolean
+}) {
   return (
-    <div className="loading-state" role="status" aria-live="polite">
+    <div
+      className={compact ? 'loading-state loading-state--compact' : 'loading-state'}
+      role="status"
+      aria-live="polite"
+    >
       <div className="spinner" aria-hidden="true">
         <span className="spinner-ring" />
         <span className="spinner-ring spinner-ring--inner" />
         <span className="spinner-core" />
       </div>
-      <p>Loading transactions…</p>
+      <p>{label}</p>
     </div>
   )
 }
@@ -70,6 +80,8 @@ function problemMessage(problem: ValidationProblem | null, status: number): stri
 
 function App() {
   const [currencies, setCurrencies] = useState<string[]>([])
+  const [currenciesLoading, setCurrenciesLoading] = useState(true)
+  const [currenciesError, setCurrenciesError] = useState<string | null>(null)
   const [targetCurrency, setTargetCurrency] = useState('')
 
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -98,9 +110,13 @@ function App() {
         }
       } catch (err) {
         if (!cancelled) {
-          setTransactionsError(
+          setCurrenciesError(
             err instanceof Error ? err.message : 'Failed to load currencies',
           )
+        }
+      } finally {
+        if (!cancelled) {
+          setCurrenciesLoading(false)
         }
       }
     }
@@ -240,28 +256,33 @@ function App() {
       <section className="panel currency-panel">
         <label className="field currency-field">
           <span>Display currency</span>
-          <select
-            value={targetCurrency}
-            onChange={(e) => {
-              setTargetCurrency(e.target.value)
-              setTransactionsLoading(true)
-              setTransactionsError(null)
-            }}
-            disabled={transactionsLoading && currencies.length === 0}
-          >
-            <option value="">USD only</option>
-            {currencies.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency}
-              </option>
-            ))}
-          </select>
+          {currenciesLoading ? (
+            <LoadingSpinner label="Loading currencies… (Treasury API is slow, this may take up to 20 seconds)" compact />
+          ) : currenciesError ? (
+            <p className="error">{currenciesError}</p>
+          ) : (
+            <select
+              value={targetCurrency}
+              onChange={(e) => {
+                setTargetCurrency(e.target.value)
+                setTransactionsLoading(true)
+                setTransactionsError(null)
+              }}
+            >
+              <option value="">USD only</option>
+              {currencies.map((currency) => (
+                <option key={currency} value={currency}>
+                  {currency}
+                </option>
+              ))}
+            </select>
+          )}
         </label>
       </section>
 
       <section className="panel">
         <h2>All transactions</h2>
-        {transactionsLoading && <LoadingTransactions />}
+        {transactionsLoading && <LoadingSpinner label="Loading transactions…" />}
         {transactionsError && <p className="error">{transactionsError}</p>}
         {!transactionsLoading && !transactionsError && transactions.length === 0 && (
           <p className="empty">No transactions yet.</p>

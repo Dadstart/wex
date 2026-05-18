@@ -4,6 +4,8 @@ obj/
 *.user
 *.suo
 server/wwwroot/
+server/wex.db
+server/wex.db-*
 
 # Node
 node_modules/

@@ -35,7 +35,10 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors();
 app.UseDefaultFiles();
 app.UseStaticFiles();

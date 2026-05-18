@@ -1,0 +1,11 @@
+@Wex.Server_HostAddress = http://localhost:5118
+
+GET {{Wex.Server_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+GET {{Wex.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

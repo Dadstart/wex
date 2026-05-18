@@ -1,0 +1,16 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+server/wwwroot/
+
+# Node
+node_modules/
+client/dist/
+
+# IDE / OS
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
